@@ -15,7 +15,7 @@
 - [x] 3. Update interfaces/crowdfunding.rs
 - [x] 4. Implement withdraw_event_funds in crowdfunding.rs
 - [x] 5. Create withdraw_event_funds_test.rs
-- [ ] 6. cargo test to verify
-- [ ] 7. Git branch/PR
+- [x] 6. cargo test to verify
+- [x] 7. Git branch/PR
 
-Current: Step 1
+Current: Task complete
