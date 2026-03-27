@@ -177,6 +177,11 @@ pub fn platform_fee_bps_set(env: &Env, admin: Address, fee_bps: u32) {
     env.events().publish(topics, fee_bps);
 }
 
+pub fn event_funds_withdrawn(env: &Env, pool_id: u64, to: Address, amount: i128) {
+    let topics = (Symbol::new(env, "event_funds_withdrawn"), pool_id, to);
+    env.events().publish(topics, amount);
+}
+
 pub fn ticket_sold(
     env: &Env,
     pool_id: u64,

@@ -1683,6 +1683,67 @@ impl CrowdfundingTrait for CrowdfundingContract {
         Ok(())
     }
 
+    fn withdraw_event_funds(
+        env: Env,
+        pool_id: u64,
+        to: Address,
+    ) -> Result<(), CrowdfundingError> {
+        if Self::is_paused(env.clone()) {
+            return Err(CrowdfundingError::ContractPaused);
+        }
+        to.require_auth();
+
+        // Pool must exist
+        let pool_key = StorageKey::Pool(pool_id);
+        let _pool: PoolConfig = env
+            .storage()
+            .instance()
+            .get(&pool_key)
+            .ok_or(CrowdfundingError::PoolNotFound)?;
+
+        // Check pool state: must be Disbursed or Completed
+        let state_key = StorageKey::PoolState(pool_id);
+        let state: PoolState = env
+            .storage()
+            .instance()
+            .get(&state_key)
+            .unwrap_or(PoolState::Active);
+        match state {
+            PoolState::Disbursed | PoolState::Completed => {},
+            _ => return Err(CrowdfundingError::InvalidPoolState),
+        }
+
+        // Check if already drained
+        let drained_key = StorageKey::PoolDrained(pool_id);
+        if env.storage().instance().get::<StorageKey, bool>(&drained_key).unwrap_or(false) {
+            return Err(CrowdfundingError::PoolAlreadyDisbursed);
+        }
+
+        // Get pool token
+        let token_address: Address = _pool.token_address;
+
+        // Get event pool balance
+        let event_pool_key = StorageKey::EventPool(pool_id);
+        let mut amount: i128 = env.storage().instance().get(&event_pool_key).unwrap_or(0);
+
+        if amount <= 0 {
+            return Err(CrowdfundingError::InsufficientFees);
+        }
+
+        // Transfer funds (CEI pattern)
+        use soroban_sdk::token;
+        let token_client = token::Client::new(&env, &token_address);
+        token_client.transfer(&env.current_contract_address(), &to, &amount);
+
+        // Mark as drained AFTER transfer
+        env.storage().instance().set(&drained_key, &true);
+
+        // Emit event
+        events::event_funds_withdrawn(&env, pool_id, to, amount);
+
+        Ok(())
+    }
+
     fn set_emergency_contact(env: Env, contact: Address) -> Result<(), CrowdfundingError> {
         let admin: Address = env
             .storage()

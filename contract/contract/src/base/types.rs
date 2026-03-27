@@ -273,6 +273,7 @@ pub enum StorageKey {
     EmergencyContact,
     CampaignFeeHistory(BytesN<32>),
     Blacklist(Address),
+    PoolDrained(u64),
 
     ReentrancyLock(u64),
     EmergencyWithdrawalLock,

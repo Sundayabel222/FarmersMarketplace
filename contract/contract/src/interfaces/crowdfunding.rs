@@ -187,6 +187,16 @@ pub trait CrowdfundingTrait {
 
     fn get_platform_fee_bps(env: Env) -> Result<u32, CrowdfundingError>;
 
+    /// Withdraw event funds from a pool after marking it as drained.
+    /// Prevents double withdrawal. Only pool creator or admin.
+    ///
+    /// Requires pool in Disbursed/Completed state with positive EventPool balance.
+    fn withdraw_event_funds(
+        env: Env,
+        pool_id: u64,
+        to: Address,
+    ) -> Result<(), CrowdfundingError>;
+
     /// Purchase a ticket for a pool, splitting the payment between the event
     /// pool and the platform fee pool using the current `PlatformFeeBps`.
     ///
